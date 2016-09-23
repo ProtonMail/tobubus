@@ -3,11 +3,12 @@ package tobubus
 import (
 	"errors"
 	"fmt"
-	"github.com/k0kubun/pp"
-	"github.com/shibukawa/localsocket"
 	"log"
 	"net"
 	"sync"
+
+	"github.com/k0kubun/pp"
+	"github.com/shibukawa/localsocket"
 )
 
 type Plugin struct {
@@ -93,9 +94,13 @@ func (p *Plugin) Close() error {
 		return errors.New("Socket is already closed")
 	}
 	sessionID := p.sessions.getUniqueSessionID()
-	socket.Write(archiveMessage(CloseClient, sessionID, nil))
+	_, err := socket.Write(archiveMessage(CloseClient, sessionID, nil))
+	if err != nil {
+		p.socket = nil
+		return err
+	}
 	message := p.sessions.receiveAndClose(sessionID)
-	err := socket.Close()
+	err = socket.Close()
 	if err != nil {
 		return err
 	}
