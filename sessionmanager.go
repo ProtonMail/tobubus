@@ -48,14 +48,16 @@ func (g *sessionManager) getUniqueSessionID() uint32 {
 
 func (g *sessionManager) receiveAndClose(id uint32) *message {
 	g.lock.Lock()
-	defer g.lock.Unlock()
 	channel, ok := g.sessions[id]
 	if !ok {
 		channel = make(chan *message)
 		g.sessions[id] = channel
 	}
+	g.lock.Unlock()
 	result := <-channel
+	g.lock.Lock()
 	delete(g.sessions, id)
+	g.lock.Unlock()
 	return result
 }
 
